@@ -1,0 +1,577 @@
+/*
+XarabWorld — Single-file React app (Demo)
+
+How to use:
+1. Create a new Vite React app (e.g. `npm create vite@latest xarabworld --template react`)
+2. Replace src/App.jsx with this file's contents and ensure Tailwind is set up
+3. Run `npm install` and `npm run dev`
+
+What this demo includes:
+- SPA with Brands (from the table you provided) organized by region/country
+- Simple search, filters, and brand pages with models list
+- Admin login (demo only) with two admin users:
+    - deadlock.exe / DEADLOCK.EXE  (demo credential)
+    - MKCAR / MKCARS               (demo credential)
+  These are stored in-memory for demo purpose; do NOT use this in production.
+- Admin Dashboard to add / edit / delete brands and models
+- LocalStorage persistence for edits
+- Placeholders for integrating live data/APIs (instructions in comments)
+
+IMPORTANT SECURITY NOTE:
+- This is a frontend-only demo. Storing plaintext credentials in frontend is insecure.
+  For a production site: implement a backend, hashed passwords, HTTPS, sessions/JWTs,
+  rate limiting, and role-based access control.
+
+You asked for exhaustive data (launch dates, histories, motorsport teams/drivers). This
+app scaffolds data storage and editing; to fill with full historical launch dates and
+motorsport details, integrate a backend + external data sources (Wikipedia, manufacturer
+APIs, motorsport APIs) and populate the database.
+
+Enjoy — edit, run, and tell me what additional features to add (API integration, CSV import,
+image uploads, server auth, or hosting instructions).
+*/
+
+import React, { useEffect, useState } from 'react';
+
+// ---------- INITIAL DATA (brands list from your table) ----------
+const INITIAL_BRANDS = [
+  { region:'Europe', country:'Germany', name:'Audi', id:'audi', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Germany', name:'BMW', id:'bmw', founded:1916, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Germany', name:'Mercedes-Benz', id:'mercedes-benz', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Germany', name:'Volkswagen', id:'volkswagen', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Germany', name:'Porsche', id:'porsche', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Germany', name:'Opel', id:'opel', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Germany', name:'Maybach', id:'maybach', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Germany', name:'Smart', id:'smart', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Germany', name:'Alpina', id:'alpina', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Europe', country:'France', name:'Peugeot', id:'peugeot', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'France', name:'Citroën', id:'citroen', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'France', name:'DS Automobiles', id:'ds-automobiles', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'France', name:'Renault', id:'renault', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'France', name:'Alpine', id:'alpine', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'France', name:'Bugatti', id:'bugatti', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Europe', country:'Italy', name:'Fiat', id:'fiat', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Italy', name:'Alfa Romeo', id:'alfa-romeo', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Italy', name:'Ferrari', id:'ferrari', founded:1939, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Italy', name:'Lamborghini', id:'lamborghini', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Italy', name:'Maserati', id:'maserati', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Italy', name:'Lancia', id:'lancia', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Italy', name:'Pagani', id:'pagani', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Italy', name:'Iveco', id:'iveco', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Europe', country:'United Kingdom', name:'Aston Martin', id:'aston-martin', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'Bentley', id:'bentley', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'Rolls-Royce', id:'rolls-royce', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'Jaguar', id:'jaguar', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'Land Rover', id:'land-rover', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'McLaren', id:'mclaren', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'Lotus', id:'lotus', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'MINI', id:'mini', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'Vauxhall', id:'vauxhall', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'Morgan', id:'morgan', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'United Kingdom', name:'TVR', id:'tvr', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Europe', country:'Spain', name:'SEAT', id:'seat', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Spain', name:'Cupra', id:'cupra', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Spain', name:'Hispano Suiza', id:'hispano-suiza', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Europe', country:'Sweden', name:'Volvo', id:'volvo', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Sweden', name:'Polestar', id:'polestar', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Sweden', name:'Koenigsegg', id:'koenigsegg', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Europe', country:'Czech Republic', name:'Škoda', id:'skoda', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Czech Republic', name:'Tatra', id:'tatra', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Europe', country:'Russia', name:'Lada', id:'lada', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Russia', name:'GAZ', id:'gaz', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Russia', name:'UAZ', id:'uaz', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Europe', country:'Russia', name:'Aurus', id:'aurus', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Europe', country:'Romania', name:'Dacia', id:'dacia', founded:null, launchDate:null, description:'', models:[] },
+
+  // Asia
+  { region:'Asia', country:'Japan', name:'Toyota', id:'toyota', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Lexus', id:'lexus', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Honda', id:'honda', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Acura', id:'acura', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Nissan', id:'nissan', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Infiniti', id:'infiniti', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Mazda', id:'mazda', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Subaru', id:'subaru', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Mitsubishi', id:'mitsubishi', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Suzuki', id:'suzuki', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Daihatsu', id:'daihatsu', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Isuzu', id:'isuzu', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Japan', name:'Hino', id:'hino', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Asia', country:'South Korea', name:'Hyundai', id:'hyundai', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'South Korea', name:'Kia', id:'kia', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'South Korea', name:'Genesis', id:'genesis', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'South Korea', name:'KG Mobility (SsangYong)', id:'kg-mobility', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Asia', country:'China', name:'BYD', id:'byd', founded:1995, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Geely', id:'geely', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Volvo', id:'volvo-cn', founded:null, launchDate:null, description:'(China operations/ownership)', models:[] },
+  { region:'Asia', country:'China', name:'Zeekr', id:'zeekr', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Lynk & Co', id:'lynk-co', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Changan', id:'changan', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Great Wall', id:'great-wall', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Haval', id:'haval', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Ora', id:'ora', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Wey', id:'wey', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Tank', id:'tank', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'SAIC', id:'saic', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'MG', id:'mg', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Roewe', id:'roewe', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Wuling', id:'wuling', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'FAW', id:'faw', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Hongqi', id:'hongqi', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Chery', id:'chery', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Jetour', id:'jetour', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Exeed', id:'exeed', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'NIO', id:'nio', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'XPeng', id:'xpeng', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Li Auto', id:'li-auto', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'BAIC', id:'baic', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Arcfox', id:'arcfox', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'China', name:'Dongfeng', id:'dongfeng', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Asia', country:'India', name:'Tata', id:'tata', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'India', name:'Mahindra', id:'mahindra', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'India', name:'Maruti Suzuki', id:'maruti-suzuki', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'India', name:'Ashok Leyland', id:'ashok-leyland', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'India', name:'Force Motors', id:'force-motors', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Asia', country:'Malaysia', name:'Proton', id:'proton', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Malaysia', name:'Perodua', id:'perodua', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Asia', country:'Indonesia', name:'Esemka', id:'esemka', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Asia', country:'Iran', name:'Iran Khodro', id:'iran-khodro', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Asia', country:'Iran', name:'SAIPA', id:'saipa', founded:null, launchDate:null, description:'', models:[] },
+
+  // North America
+  { region:'North America', country:'United States', name:'Ford', id:'ford', founded:1903, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Lincoln', id:'lincoln', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Chevrolet', id:'chevrolet', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Cadillac', id:'cadillac', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'GMC', id:'gmc', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Buick', id:'buick', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Chrysler', id:'chrysler', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Dodge', id:'dodge', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Ram', id:'ram', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Jeep', id:'jeep', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Tesla', id:'tesla', founded:2003, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Rivian', id:'rivian', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Lucid', id:'lucid', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Fisker', id:'fisker', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'Canoo', id:'canoo', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'United States', name:'SSC North America', id:'ssc-north-america', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'North America', country:'Canada', name:'Multimatic', id:'multimatic', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'Canada', name:'Terradyne', id:'terradyne', founded:null, launchDate:null, description:'', models:[] },
+  { region:'North America', country:'Canada', name:'Prevost', id:'prevost', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'North America', country:'Mexico', name:'Mastretta', id:'mastretta', founded:null, launchDate:null, description:'', models:[] },
+
+  // South America
+  { region:'South America', country:'Brazil', name:'Agrale', id:'agrale', founded:null, launchDate:null, description:'', models:[] },
+  { region:'South America', country:'Brazil', name:'Troller', id:'troller', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'South America', country:'Argentina', name:'Pampa', id:'pampa', founded:null, launchDate:null, description:'', models:[] },
+
+  // Africa
+  { region:'Africa', country:'South Africa', name:'Birkin', id:'birkin', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Africa', country:'South Africa', name:'Paramount', id:'paramount', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Africa', country:'South Africa', name:'Bumblebee EV', id:'bumblebee-ev', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Africa', country:'Nigeria', name:'Innoson', id:'innoson', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Africa', country:'Morocco', name:'Neo Motors', id:'neo-motors', founded:null, launchDate:null, description:'', models:[] },
+
+  // Oceania
+  { region:'Oceania', country:'Australia', name:'Holden', id:'holden', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Oceania', country:'Australia', name:'HSV', id:'hsv', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Oceania', country:'Australia', name:'Walkinshaw', id:'walkinshaw', founded:null, launchDate:null, description:'', models:[] },
+  { region:'Oceania', country:'Australia', name:'Bolwell', id:'bolwell', founded:null, launchDate:null, description:'', models:[] },
+
+  { region:'Oceania', country:'New Zealand', name:'Hulme', id:'hulme', founded:null, launchDate:null, description:'', models:[] }
+];
+
+// ---------- DEMO ADMIN USERS (INSECURE: for demo only) ----------
+const DEMO_ADMINS = [
+  { username: 'deadlock.exe', password: 'DEADLOCK.EXE', displayName: 'deadlock.exe' },
+  { username: 'MKCAR', password: 'MKCARS', displayName: 'MKCAR' }
+];
+
+// ---------- Utility helpers ----------
+const storageKey = 'xarabworld_data_v1';
+const adminsKey = 'xarabworld_admins_v1';
+
+function loadFromStorage(){
+  try{
+    const raw = localStorage.getItem(storageKey);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+function saveToStorage(data){ localStorage.setItem(storageKey, JSON.stringify(data)); }
+
+function loadAdmins(){
+  try{
+    const raw = localStorage.getItem(adminsKey);
+    if(!raw) return DEMO_ADMINS;
+    return JSON.parse(raw);
+  }catch(e){ return DEMO_ADMINS; }
+}
+function saveAdmins(list){ localStorage.setItem(adminsKey, JSON.stringify(list)); }
+
+// ---------- App ----------
+export default function App(){
+  // App state
+  const [brands, setBrands] = useState(() => loadFromStorage() || INITIAL_BRANDS);
+  const [query, setQuery] = useState('');
+  const [filterRegion, setFilterRegion] = useState('All');
+  const [selected, setSelected] = useState(null);
+  const [admin, setAdmin] = useState(null);
+  const [admins, setAdmins] = useState(()=> loadAdmins());
+  const [editingBrand, setEditingBrand] = useState(null);
+  const [message, setMessage] = useState('');
+
+  useEffect(()=>{ saveToStorage(brands); }, [brands]);
+  useEffect(()=>{ saveAdmins(admins); }, [admins]);
+
+  // Derived
+  const regions = Array.from(new Set(brands.map(b=>b.region))).sort();
+  const countries = Array.from(new Set(brands.map(b=>b.country))).sort();
+
+  const visible = brands.filter(b => {
+    if(filterRegion !== 'All' && b.region !== filterRegion) return false;
+    if(query && !`${b.name} ${b.country} ${b.region}`.toLowerCase().includes(query.toLowerCase())) return false;
+    return true;
+  }).sort((a,b)=> a.name.localeCompare(b.name));
+
+  // Admin actions
+  function login(username, password){
+    const found = admins.find(a => a.username === username && a.password === password);
+    if(found){ setAdmin(found); setMessage(''); return true; }
+    setMessage('Invalid credentials'); return false;
+  }
+  function logout(){ setAdmin(null); }
+
+  function addBrand(b){
+    // ensure id
+    const id = (b.name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    const newBrand = { ...b, id, models: b.models || [] };
+    setBrands(prev => [ ...prev, newBrand ]);
+    setMessage('Brand added');
+  }
+  function updateBrand(id, patch){
+    setBrands(prev => prev.map(b => b.id===id ? { ...b, ...patch } : b));
+    setMessage('Brand updated');
+  }
+  function deleteBrand(id){
+    if(!confirm('Delete brand?')) return;
+    setBrands(prev => prev.filter(b=>b.id!==id));
+    setMessage('Brand deleted');
+  }
+
+  function addModel(brandId, model){
+    setBrands(prev => prev.map(b => b.id===brandId ? { ...b, models: [ ...(b.models||[]), model ] } : b));
+    setMessage('Model added');
+  }
+  function removeModel(brandId, index){
+    setBrands(prev => prev.map(b => {
+      if(b.id!==brandId) return b;
+      const m = [...(b.models||[])]; m.splice(index,1);
+      return { ...b, models: m };
+    }));
+    setMessage('Model removed');
+  }
+
+  // Simple CSV export/import helpers
+  function exportJSON(){
+    const dataStr = JSON.stringify(brands, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'xarabworld_brands.json'; a.click(); URL.revokeObjectURL(url);
+  }
+  function importJSON(file){
+    const reader = new FileReader();
+    reader.onload = e => { try{ const parsed = JSON.parse(e.target.result); if(Array.isArray(parsed)) setBrands(parsed); else setMessage('Invalid file'); }catch(err){ setMessage('Invalid JSON'); } };
+    reader.readAsText(file);
+  }
+
+  // ---------- Render ----------
+  return (
+    <div className="min-h-screen bg-gray-900 text-white p-6">
+      <header className="max-w-6xl mx-auto flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-red-700 flex items-center justify-center font-bold text-xl">XW</div>
+          <div>
+            <h1 className="text-2xl font-bold">XarabWorld — Commercial Car Hub</h1>
+            <div className="text-sm text-gray-300">Global car & motorsport data — demo</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {admin ? (
+            <>
+              <div className="text-sm">Admin: <strong>{admin.displayName}</strong></div>
+              <button onClick={logout} className="px-3 py-1 rounded bg-gray-700">Logout</button>
+            </>
+          ) : (
+            <AdminLogin onLogin={login} />
+          )}
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto grid grid-cols-12 gap-6">
+        <aside className="col-span-3 bg-gray-800 p-4 rounded-lg">
+          <div className="mb-4">
+            <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search brands, countries..." className="w-full p-2 rounded bg-gray-700 text-sm" />
+          </div>
+          <div className="mb-4">
+            <label className="text-xs text-gray-300">Region</label>
+            <select value={filterRegion} onChange={e=>setFilterRegion(e.target.value)} className="w-full mt-1 p-2 rounded bg-gray-700 text-sm">
+              <option>All</option>
+              {regions.map(r=> <option key={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="mb-4">
+            <button onClick={()=>{ setSelected(null); setEditingBrand(null); setMessage(''); }} className="w-full p-2 rounded bg-red-600">Browse All</button>
+          </div>
+
+          <div className="space-y-2 max-h-[60vh] overflow-auto">
+            {visible.map(b => (
+              <div key={b.id} className="p-2 rounded hover:bg-gray-700 cursor-pointer flex items-center justify-between" onClick={()=>setSelected(b)}>
+                <div>
+                  <div className="font-semibold">{b.name}</div>
+                  <div className="text-xs text-gray-400">{b.country} • {b.region}</div>
+                </div>
+                <div className="text-sm text-gray-300">{b.models?.length || 0}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 text-xs text-gray-400">Export/Import:</div>
+          <div className="flex gap-2 mt-2">
+            <button onClick={exportJSON} className="flex-1 p-2 rounded bg-gray-700 text-sm">Export JSON</button>
+            <label className="flex-1 p-2 rounded bg-gray-700 text-sm text-center cursor-pointer">
+              Import
+              <input type="file" accept="application/json" className="hidden" onChange={e=> importJSON(e.target.files[0])} />
+            </label>
+          </div>
+
+        </aside>
+
+        <section className="col-span-6 bg-gray-800 p-4 rounded-lg">
+          {!selected ? (
+            <div>
+              <h2 className="text-xl font-bold mb-2">Brands</h2>
+              <p className="text-sm text-gray-400 mb-4">Click a brand to view details and models. Admins can edit entries.</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                {visible.slice(0,40).map(b => (
+                  <div key={b.id} className="bg-gray-700 p-3 rounded">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold">{b.name}</div>
+                        <div className="text-xs text-gray-300">{b.country} • {b.region}</div>
+                      </div>
+                      <div className="text-xs text-gray-300">{b.models?.length || 0} models</div>
+                    </div>
+                    <div className="mt-3 text-sm text-gray-300">{b.description || <span className="text-gray-500">No description yet</span>}</div>
+                    <div className="mt-3 flex gap-2">
+                      <button onClick={()=>setSelected(b)} className="px-2 py-1 rounded bg-red-600 text-sm">Open</button>
+                      {admin && <button onClick={()=>{ setEditingBrand(b); setSelected(null); }} className="px-2 py-1 rounded bg-gray-600 text-sm">Edit</button>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <BrandView brand={selected} onClose={()=>setSelected(null)} onEdit={()=>{ setEditingBrand(selected); setSelected(null); }} onDelete={deleteBrand} onAddModel={addModel} onRemoveModel={removeModel} admin={admin} />
+          )}
+        </section>
+
+        <aside className="col-span-3 bg-gray-800 p-4 rounded-lg">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold">Admin</h3>
+            <div className="text-sm text-gray-300">Admins can add/edit brands and models.</div>
+          </div>
+
+          {admin ? (
+            <div>
+              <button onClick={()=>{ setEditingBrand({ name:'', country:'', region:'', description:'', founded:null, models:[] }); setSelected(null); }} className="w-full p-2 bg-green-600 rounded mb-2">+ New Brand</button>
+
+              <div className="mt-4">
+                <h4 className="text-sm font-semibold">Manage Admins</h4>
+                <AdminManager admins={admins} setAdmins={setAdmins} />
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-400">Log in as admin to edit the dataset.</div>
+          )}
+
+          <div className="mt-6 text-xs text-gray-500">Message: {message}</div>
+        </aside>
+
+        {/* Editor modal-like area */}
+        {editingBrand && (
+          <div className="col-span-12 mt-6 bg-gray-800 p-4 rounded-lg">
+            <BrandEditor brand={editingBrand} onCancel={()=>setEditingBrand(null)} onSave={(b)=>{
+              if(b.id){ updateBrand(b.id, b); setEditingBrand(null); }
+              else addBrand(b); setEditingBrand(null);
+            }} />
+          </div>
+        )}
+
+      </main>
+
+      <footer className="max-w-6xl mx-auto mt-8 text-center text-gray-500 text-sm">XarabWorld demo — frontend-only. For real app: backend + database + API integrations required.</footer>
+    </div>
+  );
+}
+
+// ---------- Admin Login Component ----------
+function AdminLogin({ onLogin }){
+  const [u, setU] = useState('');
+  const [p, setP] = useState('');
+  function submit(e){ e.preventDefault(); onLogin(u.trim(), p); }
+  return (
+    <form onSubmit={submit} className="flex items-center gap-2">
+      <input value={u} onChange={e=>setU(e.target.value)} placeholder="admin" className="p-1 rounded bg-gray-700 text-sm" />
+      <input value={p} onChange={e=>setP(e.target.value)} placeholder="password" type="password" className="p-1 rounded bg-gray-700 text-sm" />
+      <button type="submit" className="px-3 py-1 rounded bg-red-600 text-sm">Login</button>
+    </form>
+  );
+}
+
+// ---------- AdminManager Component ----------
+function AdminManager({ admins, setAdmins }){
+  const [u, setU] = useState('');
+  const [p, setP] = useState('');
+  function add(){ if(!u||!p) return alert('Provide both'); setAdmins(prev => [...prev, { username: u, password: p, displayName: u }]); setU(''); setP(''); }
+  function remove(idx){ if(!confirm('Remove admin?')) return; setAdmins(prev => prev.filter((_,i)=>i!==idx)); }
+  return (
+    <div className="space-y-2">
+      <div className="space-y-1">
+        {admins.map((a,idx)=> (
+          <div key={a.username} className="flex items-center justify-between bg-gray-700 p-2 rounded">
+            <div>{a.displayName} <span className="text-xs text-gray-400">({a.username})</span></div>
+            <button className="text-xs" onClick={()=>remove(idx)}>Remove</button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input value={u} onChange={e=>setU(e.target.value)} placeholder="username" className="flex-1 p-1 rounded bg-gray-700 text-sm" />
+        <input value={p} onChange={e=>setP(e.target.value)} placeholder="password" className="flex-1 p-1 rounded bg-gray-700 text-sm" />
+        <button onClick={add} className="px-2 py-1 bg-green-600 rounded">Add</button>
+      </div>
+      <div className="text-xs text-gray-400">Note: Admin credentials stored in localStorage for demo.</div>
+    </div>
+  );
+}
+
+// ---------- Brand View Component ----------
+function BrandView({ brand, onClose, onEdit, onDelete, onAddModel, onRemoveModel, admin }){
+  return (
+    <div>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">{brand.name}</h2>
+          <div className="text-sm text-gray-300">{brand.country} • {brand.region} {brand.founded ? ("• Founded " + brand.founded) : ''}</div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="px-3 py-1 rounded bg-gray-700">Back</button>
+          {admin && <button onClick={()=>onEdit()} className="px-3 py-1 rounded bg-yellow-600">Edit</button>}
+          {admin && <button onClick={()=>onDelete(brand.id)} className="px-3 py-1 rounded bg-red-600">Delete</button>}
+        </div>
+      </div>
+
+      <div className="mt-4 bg-gray-700 p-3 rounded">
+        <h4 className="font-semibold">Description</h4>
+        <div className="text-sm text-gray-300">{brand.description || 'No description yet'}</div>
+      </div>
+
+      <div className="mt-4 bg-gray-700 p-3 rounded">
+        <h4 className="font-semibold">Models</h4>
+        <div className="mt-2 space-y-2">
+          {(brand.models || []).length === 0 && <div className="text-sm text-gray-400">No models yet</div>}
+          {(brand.models || []).map((m,idx)=> (
+            <div key={idx} className="flex items-center justify-between bg-gray-800 p-2 rounded">
+              <div>
+                <div className="font-semibold">{m.name} {m.year ? `(${m.year})` : ''}</div>
+                <div className="text-xs text-gray-400">Type: {m.type || '-'} • HP: {m.hp || '-'} • Price: {m.price || '-'}</div>
+              </div>
+              {admin && <button onClick={()=>onRemoveModel(brand.id, idx)} className="text-xs">Remove</button>}
+            </div>
+          ))}
+
+          {admin && <ModelAdder onAdd={(m)=> onAddModel(brand.id, m)} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModelAdder({ onAdd }){
+  const [name, setName] = useState('');
+  const [year, setYear] = useState('');
+  const [type, setType] = useState('');
+  const [hp, setHp] = useState('');
+  const [price, setPrice] = useState('');
+  function submit(){ if(!name) return alert('Model name'); onAdd({ name, year: year||null, type, hp: hp||null, price: price||null }); setName(''); setYear(''); setType(''); setHp(''); setPrice(''); }
+  return (
+    <div className="mt-2 p-2 bg-gray-800 rounded">
+      <div className="grid grid-cols-2 gap-2">
+        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Model name" className="p-1 rounded bg-gray-700 text-sm" />
+        <input value={year} onChange={e=>setYear(e.target.value)} placeholder="Year" className="p-1 rounded bg-gray-700 text-sm" />
+        <input value={type} onChange={e=>setType(e.target.value)} placeholder="Type (EV/Hybrid/ICE)" className="p-1 rounded bg-gray-700 text-sm" />
+        <input value={hp} onChange={e=>setHp(e.target.value)} placeholder="HP" className="p-1 rounded bg-gray-700 text-sm" />
+        <input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Price" className="p-1 rounded bg-gray-700 text-sm col-span-2" />
+      </div>
+      <div className="mt-2 text-right"><button onClick={submit} className="px-3 py-1 rounded bg-green-600">Add Model</button></div>
+    </div>
+  );
+}
+
+// ---------- Brand Editor Component ----------
+function BrandEditor({ brand, onCancel, onSave }){
+  const [name, setName] = useState(brand.name || '');
+  const [country, setCountry] = useState(brand.country || '');
+  const [region, setRegion] = useState(brand.region || '');
+  const [desc, setDesc] = useState(brand.description || '');
+  const [founded, setFounded] = useState(brand.founded || '');
+  function submit(){
+    const payload = { name, country, region, description: desc, founded: founded || null };
+    if(brand.id) payload.id = brand.id;
+    onSave(payload);
+  }
+  return (
+    <div>
+      <h3 className="text-xl font-bold mb-2">{brand.id ? 'Edit Brand' : 'New Brand'}</h3>
+      <div className="grid grid-cols-2 gap-2">
+        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Name" className="p-2 rounded bg-gray-700" />
+        <input value={country} onChange={e=>setCountry(e.target.value)} placeholder="Country" className="p-2 rounded bg-gray-700" />
+        <input value={region} onChange={e=>setRegion(e.target.value)} placeholder="Region" className="p-2 rounded bg-gray-700" />
+        <input value={founded} onChange={e=>setFounded(e.target.value)} placeholder="Founded (year)" className="p-2 rounded bg-gray-700" />
+        <textarea value={desc} onChange={e=>setDesc(e.target.value)} className="p-2 col-span-2 rounded bg-gray-700" placeholder="Description" rows={4} />
+      </div>
+      <div className="mt-3 flex gap-2">
+        <button onClick={submit} className="px-3 py-1 rounded bg-blue-600">Save</button>
+        <button onClick={onCancel} className="px-3 py-1 rounded bg-gray-600">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+/*
+Next steps I can implement on request:
+- Backend scaffold (Express + SQLite/Postgres) with secure admin auth
+- CSV / Wikipedia data import to populate launch dates and historical info
+- Motorsports API integration (Ergast for F1, official MotoGP/WEC feeds where available)
+- Image uploads and CDN
+- Export to a static site or deployment to Vercel/Netlify
+*/
