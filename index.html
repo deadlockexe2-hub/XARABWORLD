@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ApexDrive — Global Car & Motorsport News</title>
+<style>
+  :root{
+    --red:#b30000; --red-2:#ff4d4d; --bg:#0f0f0f; --card:#161616; --muted:#bdbdbd; --glass: rgba(255,255,255,0.03);
+    --glass-2: rgba(255,255,255,0.02);
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:Inter, "Segoe UI", Roboto, Arial;}
+  /* Header */
+  header{background: linear-gradient(90deg,var(--red), #7a0000);display:flex;align-items:center;justify-content:space-between;padding:12px 20px;gap:12px;box-shadow: 0 3px 12px rgba(0,0,0,0.6);position:sticky;top:0;z-index:50}
+  .brand-logo{display:flex;align-items:center;gap:10px}
+  .logo-box{width:44px;height:44px;border-radius:8px;background:rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px}
+  h1{margin:0;font-size:20px}
+  header nav{display:flex;gap:10px;align-items:center}
+  header nav a{color:#fff;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:8px}
+  /* Layout */
+  .wrap{max-width:1200px;margin:18px auto;padding:0 18px}
+  .top-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .search {flex:1;display:flex;gap:8px;align-items:center;background:var(--card);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+  .search input{flex:1;background:transparent;border:0;outline:none;color:#fff;font-size:14px}
+  .chip {background:var(--glass);padding:8px 12px;border-radius:999px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
+  .chip.active{background:linear-gradient(90deg,var(--red),var(--red-2));color:#111}
+
+  .tabs{display:flex;gap:10px;flex-wrap:wrap}
+  .tab-btn{padding:10px 14px;border-radius:10px;background:var(--card);cursor:pointer;border:1px solid rgba(255,255,255,0.03);font-weight:700}
+  .tab-btn.active{background:linear-gradient(90deg,var(--red),#8a0000);color:#fff;box-shadow:0 6px 18px rgba(179,0,0,0.12)}
+
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+  @media (max-width:900px){ .grid{grid-template-columns:1fr} .logo-box{display:none} }
+
+  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+  .list {display:flex;flex-direction:column;gap:8px;max-height:62vh;overflow:auto;padding-right:6px}
+  .item{display:flex;gap:10px;align-items:center;padding:9px;border-radius:8px;background:transparent;cursor:pointer;border:1px solid transparent;transition:all .18s}
+  .item:hover{transform:translateY(-3px);background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.03)}
+  .thumb{width:52px;height:34px;border-radius:6px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted)}
+  .meta{display:flex;flex-direction:column}
+  .title{font-weight:700}
+  .sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+  .hero {display:flex;flex-direction:column;gap:10px}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.012));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+  table{width:100%;border-collapse:collapse;color:#fff}
+  th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:left}
+  th{background:linear-gradient(90deg,var(--red), #8a0000);font-weight:700}
+  .delta{font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
+
+  .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:200;opacity:0;pointer-events:none;transition:all .18s}
+  .modal.open{opacity:1;pointer-events:auto}
+  .modal-card{width:min(920px,95%);background:linear-gradient(180deg,#0d0d0d,#111);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 20px 50px rgba(0,0,0,0.7)}
+  .modal-grid{display:grid;grid-template-columns:220px 1fr;gap:14px}
+  .logo-large{width:200px;height:120px;border-radius:8px;background:linear-gradient(90deg,var(--red),#8a0000);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px}
+  .meta-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .meta-pill{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;font-weight:700}
+
+  .news-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .news-item{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;border-left:4px solid var(--red)}
+  .news-item h4{margin:0;font-size:15px}
+  .news-item p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .skeleton{background:linear-gradient(90deg,#101010,#1a1a1a,#101010);height:16px;border-radius:6px;animation:sk 1.2s infinite}
+  @keyframes sk{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
+
+  /* full-page entity view (brand/team) */
+  .page { display:none; padding:18px; max-width:1200px; margin:18px auto; }
+  .page.active{ display:block }
+  .page-hero{ display:flex; gap:18px; align-items:flex-start; margin-bottom:14px; }
+  .page-hero .left{ width:260px; flex:0 0 260px; }
+  .page-hero .right{ flex:1 }
+  .spec-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px }
+  @media (max-width:900px){ .page-hero{ flex-direction:column } .page-hero .left{ width:100% } .spec-grid{ grid-template-columns:1fr } }
+
+  .compare-bar{ position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:rgba(0,0,0,0.6); padding:8px 12px; border-radius:999px; display:flex; gap:8px; align-items:center; border:1px solid rgba(255,255,255,0.04) }
+  .fav-btn{background:var(--red);color:#fff;padding:8px 10px;border-radius:8px;border:0;cursor:pointer}
+
+  footer{margin-top:26px;padding:18px;text-align:center;color:#ddd}
+  .toggle{cursor:pointer;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-logo">
+    <div class="logo-box">A</div>
+    <div>
+      <h1>ApexDrive</h1>
+      <div style="font-size:12px;color:rgba(255,255,255,0.9);margin-top:2px">Global Car & Motorsport News — Red & Black</div>
+    </div>
+  </div>
+  <nav>
+    <a href="#/" onclick="navigateHome()">Home</a>
+    <a href="#/subscribe" onclick="navigateTo('/subscribe')">Subscribe</a>
+    <a class="toggle" id="darkToggle" title="Toggle dark mode">Dark</a>
+  </nav>
+</header>
+
+<main class="wrap" id="app">
+  <div class="top-controls">
+    <div class="search" title="Search brands, teams, riders...">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:.8"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="globalSearch" placeholder="Search brands, teams or riders (e.g. Ferrari, Red Bull, Marquez)" />
+      <button class="chip" onclick="resetFilters()">Reset</button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Main Tabs">
+      <div class="tab-btn active" data-target="cars" onclick="switchMainTab('cars', this)">Cars</div>
+      <div class="tab-btn" data-target="motorsport" onclick="switchMainTab('motorsport', this)">Motorsport</div>
+      <div class="tab-btn" data-target="about" onclick="switchMainTab('about', this)">About</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="grid" id="mainGrid">
+    <div>
+      <div id="leftPanel" class="panel">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <div class="chip active" data-filter="all" onclick="filterList('all', this)">All</div>
+          <div class="chip" data-filter="chinese" onclick="filterList('chinese', this)">Chinese</div>
+          <div class="chip" data-filter="european" onclick="filterList('european', this)">European</div>
+          <div class="chip" data-filter="american" onclick="filterList('american', this)">American</div>
+          <div class="chip" data-filter="f1" onclick="filterList('f1', this)">F1 Teams</div>
+          <div class="chip" data-filter="wec" onclick="filterList('wec', this)">WEC Teams</div>
+          <div class="chip" data-filter="motogp" onclick="filterList('motogp', this)">MotoGP</div>
+        </div>
+
+        <div class="list" id="entityList" aria-live="polite">
+          <!-- injected -->
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+
+      <div class="panel">
+        <h3 style="margin:0 0 8px 0">Top Headlines</h3>
+        <div class="news-list" id="topNews"></div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div>
+            <h2 id="detailTitle">Welcome to ApexDrive</h2>
+            <div style="color:var(--muted);margin-top:6px">Click a brand, team, or rider on the left to see details, news, compare and favorites.</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:800;color:var(--red)">Red & Black</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">Commercial • News hub • Motorsport live-style</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="standingsCard" class="card" style="min-height:180px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3 id="standingsTitle">Live Standings (Simulated)</h3>
+          <div style="font-size:13px;color:var(--muted)">Auto-refreshing every 6s</div>
+        </div>
+        <div id="standingsFilter" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <div class="chip" onclick="renderStandingsFor('f1')">F1</div>
+          <div class="chip" onclick="renderStandingsFor('wec')">WEC</div>
+          <div class="chip" onclick="renderStandingsFor('motogp')">MotoGP</div>
+        </div>
+        <div id="standingsContent" class="standings" style="margin-top:10px;max-height:46vh;overflow:auto"></div>
+      </div>
+
+      <div id="recentCard" class="card">
+        <h3>Latest Articles</h3>
+        <div id="recentList" class="news-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2025 ApexDrive — Built for car lovers. Want real API integration? Ask me to "plug live APIs".</footer>
+</main>
+
+<!-- Full entity page (brand/team) -->
+<section id="entityPage" class="page" aria-hidden="true">
+  <div style="max-width:1200px;margin:18px auto;padding:0 18px">
+    <a href="#/" onclick="navigateHome()" class="chip">⬅ Back</a>
+    <div id="entityContent" class="page-hero card" style="margin-top:12px">
+      <!-- injected -->
+    </div>
+
+    <div id="entityArticles" class="card" style="margin-top:12px">
+      <h3 id="entityArticlesTitle">Latest News</h3>
+      <div id="entityArticlesList" class="news-list"></div>
+    </div>
+
+    <div id="entitySpecs" class="card" style="margin-top:12px">
+      <h3>Specifications & Models</h3>
+      <div id="entitySpecContent" class="spec-grid" style="margin-top:10px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div id="modal" class="modal" role="dialog" aria-hidden="true" onclick="closeModalIfBackdrop(event)">
+  <div class="modal-card" role="document" aria-modal="true">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:800">Details</div>
+      <button onclick="closeModal()" style="background:transparent;border:0;color:var(--muted);font-weight:800;cursor:pointer">✕</button>
+    </div>
+    <div class="modal-grid" style="margin-top:12px">
+      <div>
+        <div class="logo-large" id="modalLogo">A</div>
+        <div class="meta-list" id="modalMeta"></div>
+      </div>
+      <div>
+        <h2 id="modalTitle">Title</h2>
+        <div id="modalDesc" style="color:var(--muted);margin-top:8px"></div>
+        <div style="margin-top:12px"><h4 style="margin:0 0 8px 0">Recent News</h4><div id="modalNews" class="news-list"></div></div>
+        <div style="margin-top:12px"><h4 style="margin:0 0 8px 0">Quick Facts</h4><div id="modalFacts" style="color:var(--muted)"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Compare bar -->
+<div id="compareBar" class="compare-bar" style="display:none">
+  <div style="font-weight:700">Compare</div>
+  <div id="compareItems" style="display:flex;gap:8px"></div>
+  <button class="chip" onclick="openCompare()">Open</button>
+</div>
+
+<script>
+/* ===========================
+   DATA (brands + motorsport)
+   - mixed fuel types: ICE, Hybrid, EV
+   - models list for each brand
+   - news arrays for brands & motorsport teams
+   =========================== */
+const DATA = {
+  brands: [
+    {
+      id: 'BMW',
+      name: 'BMW',
+      country: 'Germany',
+      founded: 1916,
+      type: 'Mixed',
+      logoText: 'BMW',
+      desc: 'BMW is a German manufacturer of luxury vehicles and motorcycles. The brand produces a wide range of cars from 3-series sedans to M-performance models and electric i-series.',
+      focus: 'Performance & Luxury across ICE, Hybrid, EV lines.',
+      models: [
+        { name:'3 Series', year:2024, type:'ICE/Hybrid', hp:255, price:'$42,000' },
+        { name:'i4', year:2024, type:'EV', hp:335, price:'$56,000' },
+        { name:'M3', year:2025, type:'ICE/Hybrid', hp:503, price:'$75,000' }
+      ],
+      news: [
+        { title: 'BMW M3 CS announced', excerpt: 'New M3 CS targets track lovers with weight reduction and enhanced aero.' },
+        { title: 'BMW expands i-range', excerpt: 'New battery chemistry increases range across the i-series.' }
+      ]
+    },
+    {
+      id: 'Ferrari',
+      name: 'Ferrari',
+      country: 'Italy',
+      founded: 1939,
+      type: 'Supercars (ICE/Hybrid)',
+      logoText: 'SF',
+      desc: 'Ferrari is Italy’s iconic supercar maker, famous for producing high-performance combustion and hybrid supercars. Deep motorsport pedigree in Formula 1.',
+      focus: 'High-performance ICE & hybrid hypercars; exclusive limited runs.',
+      models: [
+        { name:'296 GTB', year:2023, type:'Hybrid', hp:818, price:'$330,000' },
+        { name:'Purosangue', year:2024, type:'ICE', hp:725, price:'$390,000' }
+      ],
+      news: [
+        { title: 'Ferrari prototype tests EV tech', excerpt: 'Ferrari experiments with electrified systems while keeping performance in focus.' },
+        { title: 'New limited-run hypercar confirmed', excerpt: 'Ferrari teases a new track-focused hypercar for collectors.' }
+      ]
+    },
+    {
+      id: 'BYD',
+      name: 'BYD',
+      country: 'China',
+      founded: 1995,
+      type: 'EV & Hybrid',
+      logoText: 'BYD',
+      desc: 'BYD is one of China’s largest EV manufacturers and a major battery maker. Known for affordable electric vehicles and rapid global expansion.',
+      focus: 'Mass-market EVs and batteries.',
+      models: [
+        { name:'Atto 3', year:2024, type:'EV', hp:201, price:'$28,000' },
+        { name:'Tang', year:2024, type:'Hybrid/EV', hp:320, price:'$32,000' }
+      ],
+      news: [
+        { title: 'BYD expands into Europe', excerpt: 'BYD announces new model launches targeted for the European market.' },
+        { title: 'New battery plant planned', excerpt: 'BYD invests in local battery production to support sales growth.' }
+      ]
+    },
+    {
+      id: 'Ford',
+      name: 'Ford',
+      country: 'USA',
+      founded: 1903,
+      type: 'Mixed',
+      logoText: 'FD',
+      desc: 'Ford is an American automaker producing a broad mix of vehicles from F-series trucks to performance Mustangs and electric F-150s.',
+      focus: 'Trucks, performance, and electrification of core models.',
+      models: [
+        { name:'F-150', year:2024, type:'ICE/Hybrid/EV', hp:400, price:'$36,000' },
+        { name:'Mustang', year:2024, type:'ICE/Hybrid', hp:450, price:'$54,000' }
+      ],
+      news: [
+        { title: 'Ford F-150 Lightning expands production', excerpt: 'Demand for the electric truck pushes production increases.' },
+        { title: 'Mustang special edition revealed', excerpt: 'Limited-run Mustang GT with performance pack.' }
+      ]
+    },
+    {
+      id: 'Tesla',
+      name: 'Tesla',
+      country: 'USA',
+      founded: 2003,
+      type: 'EV',
+      logoText: 'TS',
+      desc: 'Tesla is known for its mass-market electric vehicles, advanced autonomy software, and direct-sales model.',
+      focus: 'Electric vehicles and software-first approach.',
+      models: [
+        { name:'Model 3', year:2024, type:'EV', hp:283, price:'$39,000' },
+        { name:'Cybertruck', year:2025, type:'EV', hp:680, price:'$59,000' }
+      ],
+      news: [
+        { title: 'Cybertruck hits limited deliveries', excerpt: 'Initial production units delivered to early customers.' }
+      ]
+    }
+  ],
+
+  motorsport: {
+    f1: {
+      title: 'Formula 1',
+      // teams with realistic modern points (simulated)
+      teams: [
+        { id:'redbull', name:'Red Bull Racing', base:'Milton Keynes', drivers:[{name:'Max Verstappen'},{name:'Sergio Pérez'}], points:442,
+          news: [{title:'Red Bull dominate opening rounds', excerpt:'Strong power unit and aero package keep them ahead.'}],
+          facts: { championships:6 }
+        },
+        { id:'mercedes', name:'Mercedes-AMG Petronas', base:'Brackley', drivers:[{name:'Lewis Hamilton'},{name:'George Russell'}], points:320,
+          news: [{title:'Mercedes introduces hybrid update', excerpt:'Mid-season hybrid changes aim to close gap.'}], facts:{ championships:8 }
+        },
+        { id:'ferrari', name:'Scuderia Ferrari', base:'Maranello', drivers:[{name:'Charles Leclerc'},{name:'Carlos Sainz'}], points:366,
+          news: [{title:'Ferrari updates aero', excerpt:'Revised winglets at Monaco give better cornering.'}], facts:{ championships:16 }
+        }
+      ]
+    },
+    wec: {
+      title: 'WEC',
+      teams:[
+        { id:'toyota', name:'Toyota Gazoo Racing', car:'GR010 Hybrid', drivers:[{name:'Sébastien Buemi'},{name:'Brendon Hartley'}], points:162,
+          news:[{title:'Toyota holds Le Mans advantage', excerpt:'Hybrid reliability pays off at endurance rounds.'}], facts:{ winsLeMans:4 }
+        },
+        { id:'porsche', name:'Porsche Penske Motorsport', car:'963', drivers:[{name:'Kevin Estre'},{name:'Laurens Vanthoor'}], points:150,
+          news:[{title:'Porsche shows strong pace', excerpt:'Qualifying pace suggests good race strategy.'}], facts:{ newEntry:2023 }
+        }
+      ]
+    },
+    motogp: {
+      title: 'MotoGP',
+      teams:[
+        { id:'ducati', name:'Ducati Lenovo Team', bike:'Desmosedici', riders:[{name:'Pecco Bagnaia'},{name:'Enea Bastianini'}], points:391,
+          news:[{title:'Ducati dominate with engine advantage', excerpt:'Consistent podiums keep Ducati ahead.'}], facts:{ titles:20 }
+        },
+        { id:'honda', name:'Repsol Honda Team', bike:'RC213V', riders:[{name:'Marc Márquez'}], points:98,
+          news:[{title:'Honda upgrades chassis', excerpt:'Chassis updates improve mid-corner stability.'}], facts:{ legend:'Márquez' }
+        }
+      ]
+    }
+  },
+
+  headlines:[
+    { title: 'EV & ICE coexist — markets diversify', excerpt:'Consumers choose EV, hybrid or ICE based on budget and use-case.' },
+    { title: 'Le Mans drama: night-time overtakes', excerpt:'Strategy and weather shuffle podium positions.' },
+    { title: 'MotoGP opener delivers classic wet race', excerpt:'Riders master the spray in a memorable opener.' }
+  ]
+};
+
+/* ===========================
+   STATE & UTILS
+   =========================== */
+let flatEntities = [];
+let activeFilter = 'all';
+let simulationTimer = null;
+let activeStandings = 'f1';
+const favoritesKey = 'apexdrive_favs';
+const compareKey = 'apexdrive_compare';
+
+/* Local storage helpers */
+function readLS(key){ try{ return JSON.parse(localStorage.getItem(key)||'null'); }catch(e){return null} }
+function writeLS(key,val){ localStorage.setItem(key,JSON.stringify(val)); }
+
+/* Build flat entity list for search */
+function buildFlatEntities(){
+  flatEntities = [];
+  DATA.brands.forEach(b => flatEntities.push({type:'brand', id:b.id, name:b.name, data:b}));
+  ['f1','wec','motogp'].forEach(series=>{
+    const s = DATA.motorsport[series];
+    s.teams.forEach(t => {
+      flatEntities.push({type:series, id:t.id, name:t.name, data:t});
+      // drivers/riders as searchable items
+      const people = t.drivers || t.riders || [];
+      people.forEach(p => flatEntities.push({type: series + '_rider', id: t.id + '_' + (p.name||p).replace(/\s+/g,''), name: p.name || p, data:{team:t}}));
+    });
+  });
+}
+
+/* ===========================
+   RENDER LIST / HEADLINES / RECENT
+   =========================== */
+const entityList = document.getElementById('entityList');
+const topNews = document.getElementById('topNews');
+const recentList = document.getElementById('recentList');
+const detailTitle = document.getElementById('detailTitle');
+const standingsTitle = document.getElementById('standingsTitle');
+const standingsContent = document.getElementById('standingsContent');
+
+function renderList(filter='all', query=''){
+  entityList.innerHTML = '';
+  const matches = flatEntities.filter(e=>{
+    if(query && !e.name.toLowerCase().includes(query.toLowerCase())) return false;
+    if(filter==='all') return true;
+    if(filter==='chinese') return (e.type==='brand' && (e.data.country||'').toLowerCase()==='china');
+    if(filter==='european') return (e.type==='brand' && ['germany','italy','uk','france','spain'].includes((e.data.country||'').toLowerCase()));
+    if(filter==='american') return (e.type==='brand' && ['usa','us','united states'].includes((e.data.country||'').toLowerCase()) || e.name==='Tesla' );
+    if(filter==='f1') return e.type==='f1';
+    if(filter==='wec') return e.type==='wec';
+    if(filter==='motogp') return e.type==='motogp';
+    return true;
+  });
+
+  matches.sort((a,b)=> a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
+
+  if(matches.length===0){
+    entityList.innerHTML = '<div style="color:var(--muted);padding:8px">No results</div>'; return;
+  }
+
+  matches.forEach(item=>{
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <div class="thumb">${(item.data.logoText||item.name||item.type).slice(0,3)}</div>
+      <div class="meta">
+        <div class="title">${item.name}</div>
+        <div class="sub">${item.type.toUpperCase()} ${item.data.country? '• ' + item.data.country : ''}</div>
+      </div>
+    `;
+    el.onclick = ()=> onSelectEntity(item);
+    entityList.appendChild(el);
+  });
+}
+
+function renderTopNews(){
+  topNews.innerHTML = '';
+  DATA.headlines.slice(0,4).forEach(n=>{
+    const el = document.createElement('div');
+    el.className = 'news-item';
+    el.innerHTML = `<h4>${n.title}</h4><p>${n.excerpt}</p>`;
+    topNews.appendChild(el);
+  });
+}
+
+function renderRecentArticles(){
+  recentList.innerHTML = '';
+  const items = [];
+  DATA.brands.forEach(b=> b.news.forEach(n=> items.push({source:b.name, ...n})));
+  ['f1','wec','motogp'].forEach(series=>{
+    DATA.motorsport[series].teams.forEach(t=> t.news.forEach(n=> items.push({source:t.name, ...n})));
+  });
+  items.slice(0,6).forEach(it=>{
+    const el = document.createElement('div'); el.className='news-item';
+    el.innerHTML = `<h4>${it.title}</h4><p style="color:var(--muted)">Source: ${it.source} — ${it.excerpt}</p>`;
+    recentList.appendChild(el);
+  });
+}
+
+/* ===========================
+   SELECTION / PAGES / MODAL
+   - Clicking a brand opens a full page (SPA, same site)
+   =========================== */
+const modal = document.getElementById('modal');
+function onSelectEntity(item){
+  detailTitle.innerText = item.name + (item.type==='brand' ? ' — Brand' : ' — ' + item.type.toUpperCase());
+  if(item.type==='brand') openBrandPage(item.data.id);
+  else if(item.type==='f1' || item.type==='wec' || item.type==='motogp') openTeamPage(item.data.id, item.type);
+  else if(item.type.includes('_rider')) openRiderPage(item.name, item.data.team);
+}
+
+/* NAVIGATION: SPA hash-based */
+function navigateTo(path){
+  // path like '/brand/BMW' or '/team/ferrari' or '/compare'
+  if(path.startsWith('/brand/')) {
+    const id = path.split('/brand/')[1];
+    openBrandPage(id);
+  } else if(path.startsWith('/team/')) {
+    const parts = path.split('/team/')[1].split('/');
+    const series = parts[0]; const id = parts[1];
+    openTeamPage(id, series);
+  } else if(path === '/compare') openCompareModal();
+  else if(path === '/subscribe') openSubscribe();
+  else navigateHome();
+}
+
+function navigateHome(){
+  history.pushState({},'', '#/');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('app').style.display='block';
+  document.getElementById('entityPage').classList.remove('active');
+  detailTitle.innerText = 'Welcome to ApexDrive';
+}
+
+/* ---- BRAND PAGE ---- */
+function openBrandPage(brandId){
+  const brand = DATA.brands.find(b=>b.id === brandId);
+  if(!brand) return alert('Brand not found');
+  // show page
+  document.getElementById('app').style.display='none';
+  const page = document.getElementById('entityPage');
+  page.classList.add('active');
+  history.pushState({},'', '#/brand/' + brandId);
+
+  // fill content
+  const el = document.getElementById('entityContent');
+  el.innerHTML = `
+    <div class="left">
+      <div class="logo-large">${brand.logoText}</div>
+      <div class="meta-list" style="margin-top:8px">
+        <div class="meta-pill">${brand.country}</div>
+        <div class="meta-pill">Founded ${brand.founded}</div>
+        <div class="meta-pill">${brand.type}</div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="fav-btn" onclick="toggleFavorite('${brand.id}')">${isFavorite(brand.id)? '★ Favorited' : '☆ Add Favorite'}</button>
+        <button class="chip" onclick="addToCompare('${brand.id}')">+ Compare</button>
+      </div>
+    </div>
+    <div class="right">
+      <h2>${brand.name}</h2>
+      <div style="color:var(--muted);margin-top:6px">${brand.desc}</div>
+      <div style="margin-top:12px"><strong>Focus:</strong> ${brand.focus}</div>
+      <div style="margin-top:12px">
+        <h4>Latest News</h4>
+        <div id="brandNews" class="news-list"></div>
+      </div>
+    </div>
+  `;
+  populateNewsList('brandNews', brand.news);
+  // specs
+  const specContainer = document.getElementById('entitySpecContent');
+  specContainer.innerHTML = '';
+  brand.models.forEach(m=>{
+    const card = document.createElement('div');
+    card.style.background='rgba(255,255,255,0.02)'; card.style.padding='10px'; card.style.borderRadius='8px';
+    card.innerHTML = `<strong>${m.name} (${m.year})</strong><div style="color:var(--muted)">Type: ${m.type} • HP: ${m.hp || '-'} • Price: ${m.price || '-'}</div>`;
+    specContainer.appendChild(card);
+  });
+  document.getElementById('entityArticlesTitle').innerText = `${brand.name} — News & Articles`;
+  const arr = brand.news.map(n=> ({source: brand.name, ...n}));
+  document.getElementById('entityArticlesList').innerHTML = arr.map(a => `<div class="news-item"><h4>${a.title}</h4><p style="color:var(--muted)">Source: ${a.source} — ${a.excerpt}</p></div>`).join('');
+}
+
+/* ---- TEAM PAGE (for motorsport teams) ---- */
+function openTeamPage(teamId, seriesKey){
+  const series = DATA.motorsport[seriesKey];
+  if(!series) return alert('Series not found');
+  const team = series.teams.find(t=>t.id === teamId);
+  if(!team) return alert('Team not found');
+  document.getElementById('app').style.display='none';
+  const page = document.getElementById('entityPage');
+  page.classList.add('active');
+  history.pushState({},'', '#/team/' + seriesKey + '/' + teamId);
+
+  const el = document.getElementById('entityContent');
+  el.innerHTML = `
+    <div class="left">
+      <div class="logo-large">${team.name.split(' ').map(s=>s[0]).slice(0,3).join('')}</div>
+      <div class="meta-list" style="margin-top:8px">
+        <div class="meta-pill">${team.base || team.country || '—'}</div>
+        <div class="meta-pill">${series.title}</div>
+        <div class="meta-pill">Points: ${team.points || 0}</div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="fav-btn" onclick="toggleFavorite('${seriesKey}::${team.id}')">${isFavorite(seriesKey+'::'+team.id)? '★ Favorited' : '☆ Favorite'}</button>
+        <button class="chip" onclick="addToCompare('${seriesKey}::${team.id}')">+ Compare</button>
+      </div>
+    </div>
+    <div class="right">
+      <h2>${team.name}</h2>
+      <div style="color:var(--muted);margin-top:6px">${(team.drivers||team.riders||[]).map(d=>d.name||d).join(' • ')}</div>
+      <div style="margin-top:12px"><strong>Vehicle:</strong> ${team.car || team.chassis || team.bike || '-'}</div>
+      <div style="margin-top:12px">
+        <h4>Latest News</h4>
+        <div id="teamNews" class="news-list"></div>
+      </div>
+    </div>
+  `;
+  populateNewsList('teamNews', team.news);
+  // specs
+  const specContainer = document.getElementById('entitySpecContent');
+  specContainer.innerHTML = '';
+  specContainer.appendChild(makeSpecCard('Base', team.base || team.country || '—'));
+  specContainer.appendChild(makeSpecCard('Points', team.points || 0));
+  Object.entries(team.facts||{}).forEach(([k,v]) => specContainer.appendChild(makeSpecCard(k, v)));
+  document.getElementById('entityArticlesTitle').innerText = `${team.name} — News & Articles`;
+  const arr = (team.news||[]).map(n=> ({source: team.name, ...n}));
+  document.getElementById('entityArticlesList').innerHTML = arr.map(a => `<div class="news-item"><h4>${a.title}</h4><p style="color:var(--muted)">Source: ${a.source} — ${a.excerpt}</p></div>`).join('');
+}
+
+/* ---- Rider quick page ---- */
+function openRiderPage(name, team){
+  document.getElementById('app').style.display='none';
+  const page = document.getElementById('entityPage');
+  page.classList.add('active');
+  history.pushState({},'', '#/rider/' + encodeURIComponent(name));
+
+  const el = document.getElementById('entityContent');
+  el.innerHTML = `
+    <div class="left">
+      <div class="logo-large">${name.split(' ').map(s=>s[0]).slice(0,3).join('').toUpperCase()}</div>
+      <div class="meta-list" style="margin-top:8px">
+        <div class="meta-pill">Rider</div>
+        <div class="meta-pill">Team: ${team.name}</div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="fav-btn" onclick="toggleFavorite('rider::${name}')">${isFavorite('rider::'+name)? '★ Favorited' : '☆ Favorite'}</button>
+      </div>
+    </div>
+    <div class="right">
+      <h2>${name}</h2>
+      <div style="color:var(--muted);margin-top:6px">Rider for ${team.name}. Click team for full team page.</div>
+      <div style="margin-top:12px">
+        <h4>Latest News</h4>
+        <div id="riderNews" class="news-list"></div>
+      </div>
+    </div>
+  `;
+  populateNewsList('riderNews', team.news || []);
+  const specContainer = document.getElementById('entitySpecContent'); specContainer.innerHTML='';
+  specContainer.appendChild(makeSpecCard('Team', team.name));
+  document.getElementById('entityArticlesTitle').innerText = `${name} — News & Articles`;
+  document.getElementById('entityArticlesList').innerHTML = (team.news||[]).map(n=> `<div class="news-item"><h4>${n.title}</h4><p style="color:var(--muted)">Source: ${team.name} — ${n.excerpt}</p></div>`).join('');
+}
+
+/* HELPER: spec card */
+function makeSpecCard(title, val){
+  const d = document.createElement('div');
+  d.style.background='rgba(255,255,255,0.02)'; d.style.padding='10px'; d.style.borderRadius='8px';
+  d.innerHTML = `<strong>${title}</strong><div style="color:var(--muted)">${val}</div>`;
+  return d;
+}
+
+/* Modal helpers */
+function openModalWithBrand(brand){
+  document.getElementById('modalTitle').innerText = brand.name;
+  document.getElementById('modalLogo').innerText = brand.logoText || brand.name.slice(0,2);
+  const meta = document.getElementById('modalMeta'); meta.innerHTML='';
+  meta.appendChild(makePill(brand.country)); meta.appendChild(makePill('Founded ' + brand.founded)); meta.appendChild(makePill(brand.type));
+  document.getElementById('modalDesc').innerText = brand.desc;
+  populateNewsList('modalNews', brand.news); document.getElementById('modalFacts').innerText = brand.focus;
+  openModal();
+}
+function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
+function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+function closeModalIfBackdrop(e){ if(e.target===modal) closeModal(); }
+function makePill(txt){ const p=document.createElement('div'); p.className='meta-pill'; p.innerText=txt; return p; }
+function populateNewsList(containerId, arr){
+  const cont = document.getElementById(containerId); cont.innerHTML='';
+  if(!arr || arr.length===0){ cont.innerHTML='<div style="color:var(--muted)">No recent news.</div>'; return; }
+  arr.forEach(n => {
+    const el = document.createElement('div'); el.className='news-item';
+    el.innerHTML = `<h4>${n.title}</h4><p>${n.excerpt}</p>`; cont.appendChild(el);
+  });
+}
+
+/* ===========================
+   Standings (simulated live)
+   - structured so API swap is easy
+   =========================== */
+function renderStandingsFor(seriesKey){
+  activeStandings = seriesKey;
+  const s = DATA.motorsport[seriesKey];
+  standingsTitle.innerText = s.title + ' — Live Standings (simulated)';
+  let html = `<table><thead><tr><th>#</th><th>Team / Rider</th><th>Vehicle</th><th>Points</th><th>Trend</th></tr></thead><tbody>`;
+  const rows = [...s.teams].sort((a,b)=> (b.points||0) - (a.points||0));
+  rows.forEach((t,i)=>{
+    const vehicle = t.car || t.chassis || t.bike || '-';
+    const people = (t.drivers || t.riders || []).map(d=>d.name||d).slice(0,2).join(' • ');
+    html += `<tr>
+      <td>${i+1}</td>
+      <td><strong>${t.name}</strong><div style="font-size:12px;color:var(--muted)">${people}</div></td>
+      <td>${vehicle}</td>
+      <td>${t.points || 0}</td>
+      <td><span class="delta">+${Math.floor(Math.random()*6)-2}</span></td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  standingsContent.innerHTML = html;
+}
+
+/* Simulation loop */
+function startSimulation(seriesKey='f1'){
+  renderStandingsFor(seriesKey);
+  if(simulationTimer) clearInterval(simulationTimer);
+  simulationTimer = setInterval(()=>{
+    DATA.motorsport[seriesKey].teams.forEach(t=>{
+      const delta = Math.floor(Math.random()*9)-3; // -3..+5
+      t.points = Math.max(0, (t.points||0) + delta);
+    });
+    renderStandingsFor(seriesKey);
+  }, 6000);
+}
+
+/* ===========================
+   Filters, search, and tabs
+   =========================== */
+function filterList(filterName, el){
+  activeFilter = filterName;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderList(filterName, document.getElementById('globalSearch').value.trim());
+}
+document.getElementById('globalSearch').addEventListener('input', (e)=>{ renderList(activeFilter, e.target.value.trim()); });
+function resetFilters(){ document.getElementById('globalSearch').value=''; activeFilter='all'; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); document.querySelector('.chip[data-filter="all"]').classList.add('active'); renderList('all',''); }
+
+function switchMainTab(key, el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active');
+  if(key==='cars'){
+    document.querySelectorAll('.chip').forEach(c=>c.style.display='inline-block'); renderList('all',''); detailTitle.innerText='Cars — Browse brands'; renderStandingsFor('f1'); startSimulation('f1');
+    document.getElementById('app').style.display='block'; document.getElementById('entityPage').classList.remove('active');
+  } else if(key==='motorsport'){
+    document.querySelectorAll('.chip').forEach(c=>{ if(['chinese','european','american'].includes(c.dataset.filter)) c.style.display='none'; else c.style.display='inline-block'; });
+    renderList('f1',''); detailTitle.innerText='Motorsport — Click a team or rider'; renderStandingsFor('f1'); startSimulation('f1');
+  } else if(key==='about'){
+    document.querySelectorAll('.chip').forEach(c=>c.style.display='inline-block'); renderList('all',''); detailTitle.innerText='About ApexDrive';
+    standingsContent.innerHTML = '<div style="color:var(--muted)">ApexDrive demo. Ask to plug live APIs: Ergast (F1), paid providers (MotoGP/WEC).</div>';
+  }
+}
+
+/* ===========================
+   Favorites & Compare (localStorage)
+   =========================== */
+function isFavorite(id){
+  const fav = readLS(favoritesKey) || [];
+  return fav.includes(id);
+}
+function toggleFavorite(id){
+  const fav = readLS(favoritesKey) || [];
+  if(fav.includes(id)){ const idx = fav.indexOf(id); fav.splice(idx,1); } else fav.push(id);
+  writeLS(favoritesKey, fav);
+  // refresh UI buttons (simple approach: reload entity page if visible)
+  const curHash = location.hash;
+  if(curHash.startsWith('#/brand/')) {
+    const bid = curHash.split('/brand/')[1]; if(bid === id) openBrandPage(bid);
+  } else if(curHash.includes(id)) {
+    // team case
+    const parts = id.split('::');
+    if(parts.length===2) openTeamPage(parts[1], parts[0]);
+  }
+  renderFavoritesUI();
+}
+function renderFavoritesUI(){
+  // optional: show favorites somewhere — simple console output for now
+  const fav = readLS(favoritesKey) || [];
+  console.log('Favorites:', fav);
+}
+
+/* Compare list */
+function addToCompare(id){
+  const arr = readLS(compareKey) || [];
+  if(arr.includes(id)) return alert('Already in compare');
+  if(arr.length >= 3) return alert('Compare limit is 3 items');
+  arr.push(id); writeLS(compareKey, arr); updateCompareBar();
+}
+function removeFromCompare(id){
+  const arr = readLS(compareKey) || []; const i = arr.indexOf(id); if(i>=0) arr.splice(i,1); writeLS(compareKey, arr); updateCompareBar();
+}
+function updateCompareBar(){
+  const items = readLS(compareKey) || [];
+  const bar = document.getElementById('compareBar');
+  const list = document.getElementById('compareItems'); list.innerHTML = '';
+  if(items.length === 0) { bar.style.display='none'; return; }
+  bar.style.display='flex';
+  items.forEach(it=>{
+    const el = document.createElement('div'); el.style.background='rgba(255,255,255,0.02)'; el.style.padding='6px 8px'; el.style.borderRadius='8px';
+    el.innerHTML = `<strong style="font-size:13px">${it}</strong> <button class="chip" style="margin-left:6px;padding:4px 6px" onclick="removeFromCompare('${it}')">x</button>`;
+    list.appendChild(el);
+  });
+}
+function openCompare(){
+  const items = readLS(compareKey) || [];
+  if(items.length < 2) return alert('Add at least 2 items to compare');
+  // Build a simple comparison view in modal
+  const arr = items.map(id => {
+    // brand id or series::id
+    if(id.includes('::')){
+      const [series,id2] = id.split('::'); const team = DATA.motorsport[series].teams.find(t=>t.id===id2); return { id, title: team.name, specs: { Points: team.points }};
+    } else {
+      const brand = DATA.brands.find(b=>b.id===id); return { id, title: brand.name, specs: { Country: brand.country, Founded: brand.founded, Type: brand.type, Models: brand.models.length }};
+    }
+  });
+  let html = `<div style="display:flex;gap:8px;flex-wrap:wrap">`;
+  arr.forEach(a=>{
+    html += `<div style="flex:1 1 250px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px"><strong>${a.title}</strong>`;
+    Object.entries(a.specs).forEach(([k,v]) => html += `<div style="color:var(--muted)">${k}: ${v}</div>`);
+    html += `</div>`;
+  });
+  html += `</div>`;
+  // use modal to show
+  document.getElementById('modalTitle').innerText = 'Compare';
+  document.getElementById('modalLogo').innerText = 'C';
+  document.getElementById('modalMeta').innerHTML = '';
+  document.getElementById('modalDesc').innerHTML = html;
+  document.getElementById('modalNews').innerHTML = '';
+  document.getElementById('modalFacts').innerHTML = '';
+  openModal();
+}
+
+/* ===========================
+   INIT & BOOT
+   =========================== */
+function boot(){
+  buildFlatEntities();
+  renderList('all','');
+  renderTopNews();
+  renderRecentArticles();
+  renderStandingsFor('f1');
+  startSimulation('f1');
+  updateCompareBar();
+
+  // make headlines clickable to first brand
+  document.querySelectorAll('#topNews .news-item').forEach((el,i)=> { el.style.cursor='pointer'; el.onclick = ()=> openBrandPage(DATA.brands[i % DATA.brands.length].id); });
+
+  // hash-based nav
+  window.addEventListener('popstate', ()=> {
+    const hash = location.hash || '#/';
+    if(hash.startsWith('#/brand/')) {
+      const id = hash.split('/brand/')[1]; openBrandPage(id);
+    } else if(hash.startsWith('#/team/')) {
+      const parts = hash.split('/team/')[1].split('/'); openTeamPage(parts[1], parts[0]);
+    } else navigateHome();
+  });
+
+  // dark toggle
+  document.getElementById('darkToggle').onclick = toggleDark;
+}
+boot();
+
+/* ===========================
+   Small UI helpers
+   =========================== */
+function openSubscribe(){
+  alert('Subscribe page placeholder — integrate your newsletter signup here.');
+}
+function toggleDark(){
+  const body = document.body;
+  if(body.style.filter === 'invert(1)') { body.style.filter=''; document.getElementById('darkToggle').innerText='Dark'; }
+  else { body.style.filter='invert(0)'; /* just keeping style simple; the theme is already dark */ document.getElementById('darkToggle').innerText='Dark'; }
+}
+
+/* Utility wrappers to expose actions */
+window.showSeries = (s)=> { document.querySelector('.tab-btn[data-target=\"motorsport\"]').click(); renderStandingsFor(s); startSimulation(s); };
+window.showInfo = (id)=> { openBrandPage(id); };
+window.addToCompare = addToCompare;
+window.openCompare = openCompare;
+</script>
+</body>
+</html>
